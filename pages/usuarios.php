@@ -13,6 +13,9 @@ if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     exit;
 }
+if (strtoupper($_SESSION['rol']) !== 'ADMIN') {
+    die("Acceso solo para administradores");
+}
 
 /* =====================
    AJAX: OBTENER USUARIO
@@ -298,8 +301,7 @@ document.getElementById('formUsuario').addEventListener('submit', async e => {
 
         const text = await res.text(); // 👈 DEBUG
         console.log(text);
-        alert(text);   // 👈 ESTO
-
+     
         const data = JSON.parse(text);
 
         Swal.fire({

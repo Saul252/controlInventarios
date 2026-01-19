@@ -24,7 +24,7 @@ function renderNavbar(string $seccion): void
 <nav class="navbar navbar-expand-lg navbar-frutas shadow-sm">
     <div class="container-fluid">
 
-        <a class="navbar-brand" href="<?= BASE_URL ?>dashboard.php">
+        <a class="navbar-brand" href="/inventariokikes/pages/inicio.php">
             🍍 Inventarios
         </a>
 

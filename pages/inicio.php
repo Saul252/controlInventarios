@@ -1,12 +1,19 @@
 <?php
 session_start();
 
-require_once __DIR__ . '../../config.php'; // ← ajusta ruta
+require_once __DIR__ . '../../config.php';
 require_once BASE_PATH . 'includes/navbar.php';
-// if (!isset($_SESSION['usuario'])) {
-//     header("Location: index.php");
-//     exit;
-// }
+
+/* =====================
+   VALIDAR SESIÓN
+===================== */
+if (!isset($_SESSION['login']) || $_SESSION['login'] !== true) {
+    header("Location: /inventariokikes/index.php");
+    exit;
+}
+
+$rol = $_SESSION['rol'] ?? '';
+$esAdmin = ($rol === 'ADMIN');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -22,9 +29,6 @@ require_once BASE_PATH . 'includes/navbar.php';
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* =====================
-   BASE
-===================== */
 body {
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
@@ -32,15 +36,12 @@ body {
     margin: 0;
 }
 
-/* =====================
-   FONDO
-===================== */
+/* Fondo */
 .bg-illustration {
     position: fixed;
     inset: 0;
     background-color: #f6f8f7;
     z-index: -2;
-    overflow: hidden;
 }
 
 .shape {
@@ -67,9 +68,7 @@ body {
     right: -60px;
 }
 
-/* =====================
-   HEADER
-===================== */
+/* Header */
 .header {
     padding: 2.5rem 1rem 1rem;
     text-align: center;
@@ -86,9 +85,7 @@ body {
     margin-top: .5rem;
 }
 
-/* =====================
-   DASHBOARD
-===================== */
+/* Dashboard */
 .dashboard {
     padding: 2rem 1rem 4rem;
 }
@@ -110,9 +107,6 @@ body {
     box-shadow: 0 35px 70px rgba(0,0,0,0.2);
 }
 
-/* =====================
-   ICONOS
-===================== */
 .card-icon {
     font-size: 52px;
     margin-bottom: 1rem;
@@ -130,17 +124,11 @@ body {
     margin-top: .5rem;
 }
 
-/* =====================
-   LINKS
-===================== */
 .card-link {
     text-decoration: none;
     color: inherit;
 }
 
-/* =====================
-   FOOTER
-===================== */
 .footer {
     text-align: center;
     font-size: 12px;
@@ -151,27 +139,26 @@ body {
 </head>
 
 <body>
-<?php
 
-renderNavbar('Inicio');
-?>
-<!-- FONDO -->
+<?php renderNavbar('Inicio'); ?>
+
+<!-- Fondo -->
 <div class="bg-illustration">
     <div class="shape watermelon"></div>
     <div class="shape carrot"></div>
 </div>
 
-<!-- HEADER -->
+<!-- Header -->
 <div class="header">
     <h1>Inventarios</h1>
     <p>Panel de control del sistema</p>
 </div>
 
-<!-- DASHBOARD -->
+<!-- Dashboard -->
 <div class="container dashboard">
     <div class="row g-4 justify-content-center">
 
-        <!-- INVENTARIO DIARIO -->
+        <!-- INVENTARIO (TODOS) -->
         <div class="col-md-4">
             <a href="inventarios.php" class="card-link">
                 <div class="card-glass">
@@ -183,6 +170,8 @@ renderNavbar('Inicio');
                 </div>
             </a>
         </div>
+
+        <?php if ($esAdmin): ?>
 
         <!-- USUARIOS -->
         <div class="col-md-4">
@@ -209,26 +198,30 @@ renderNavbar('Inicio');
                 </div>
             </a>
         </div>
-<!-- PRODUCTOS -->
-<div class="col-md-4">
-    <a href="productos.php" class="card-link">
-        <div class="card-glass">
-            <div class="card-icon">🍎</div>
-            <div class="card-title">Productos</div>
-            <div class="card-text">
-                Alta, edición y control de productos del inventario
-            </div>
+
+        <!-- PRODUCTOS -->
+        <div class="col-md-4">
+            <a href="productos.php" class="card-link">
+                <div class="card-glass">
+                    <div class="card-icon">🍎</div>
+                    <div class="card-title">Productos</div>
+                    <div class="card-text">
+                        Alta, edición y control de productos
+                    </div>
+                </div>
+            </a>
         </div>
-    </a>
-</div>
+
+        <?php endif; ?>
 
     </div>
 </div>
 
-<!-- FOOTER -->
+<!-- Footer -->
 <div class="footer">
     Sistema interno • Gestión de inventarios
 </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

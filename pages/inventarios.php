@@ -1,9 +1,11 @@
+
 <?php
 session_start();
 
 require_once "../config/conexion.php";
-require_once __DIR__ . '../../config.php'; // ← ajusta ruta
+require_once __DIR__ . '../../config.php';
 require_once BASE_PATH . 'includes/navbar.php';
+
 /* =====================
    ZONA HORARIA
 ===================== */
@@ -12,23 +14,26 @@ date_default_timezone_set('America/Mexico_City');
 /* =====================
    SEGURIDAD
 ===================== */
-if (!isset($_SESSION['user_id'], $_SESSION['rol'])) {
+if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit;
 }
+
 $nombreUsuario = $_SESSION['nombre'] ?? 'Usuario';
-$user_id  = $_SESSION['user_id'];
-$rol      = strtoupper(trim($_SESSION['rol']));
+$user_id  = (int)$_SESSION['user_id'];
 $userUbic = $_SESSION['ubicacion_id'] ?? null;
 
 /* INVENTARIO SOLO DEL DÍA ACTUAL */
 $fecha = date('Y-m-d');
 
 /* =====================
-   UBICACIONES SEGÚN ROL
+   UBICACIONES SEGÚN USUARIO
+   - ubicacion_id NULL  → TODAS
+   - ubicacion_id != NULL → SOLO LA SUYA
 ===================== */
-if ($rol === 'ADMIN') {
+if ($userUbic === null) {
 
+    // Usuario global (admin)
     $ubicaciones = $conexion->query("
         SELECT id, nombre
         FROM ubicaciones
@@ -38,14 +43,13 @@ if ($rol === 'ADMIN') {
 
 } else {
 
-    if ($userUbic === null) {
-        die("❌ Usuario sin sucursal asignada");
-    }
-
+    // Usuario con sucursal asignada
     $stmt = $conexion->prepare("
         SELECT id, nombre
         FROM ubicaciones
-        WHERE id = ? AND activo = 1
+        WHERE id = ?
+          AND activo = 1
+        LIMIT 1
     ");
     $stmt->bind_param("i", $userUbic);
     $stmt->execute();
@@ -103,6 +107,7 @@ body {
     border: none;
     font-weight: 600;
 }
+
 /* BOTÓN EXPORTAR FLOTANTE */
 .btn-exportar {
     position: fixed;
@@ -115,11 +120,11 @@ body {
     box-shadow: 0 12px 30px rgba(47,158,68,.35);
 }
 
-/* EFECTO HOVER */
 .btn-exportar:hover {
     transform: translateY(-2px);
     box-shadow: 0 16px 40px rgba(47,158,68,.45);
 }
+
 @media (max-width: 768px) {
     .btn-exportar {
         bottom: 16px;
@@ -128,15 +133,13 @@ body {
         font-size: 14px;
     }
 }
-
-
 </style>
 </head>
 
 <body>
 
+<?php renderNavbar('Inventarios'); ?>
 
-<?php renderNavbar('Inventarios');?>
 <div class="container my-4">
 
     <div class="glass p-4 mb-4">
@@ -147,7 +150,7 @@ body {
 
     <div class="row g-4">
 
-    <?php while ($u = $ubicaciones->fetch_assoc()): ?>
+<?php while ($u = $ubicaciones->fetch_assoc()): ?>
 
         <div class="col-lg-6 col-xl-4">
             <div class="glass p-4 card-inventario">
@@ -159,7 +162,7 @@ body {
                 <form class="form-inventario"
                       action="/inventariokikes/controllers/inventario/actualizarInventario.php">
 
-                    <input type="hidden" name="ubicacion_id" value="<?= $u['id'] ?>">
+                    <input type="hidden" name="ubicacion_id" value="<?= (int)$u['id'] ?>">
 
                     <div class="table-scroll">
                         <table class="table table-sm align-middle">
@@ -218,13 +221,13 @@ while ($p = $productos->fetch_assoc()):
 
 <tr>
     <td><?= htmlspecialchars($p['nombre']) ?></td>
-    <td><?= $p['unidad'] ?></td>
+    <td><?= htmlspecialchars($p['unidad']) ?></td>
     <td class="stock-inicial"><?= $stockInicial ?></td>
     <td>
         <input type="number"
                step="0.01"
                class="form-control form-control-sm"
-               name="stock_actual[<?= $p['id'] ?>]"
+               name="stock_actual[<?= (int)$p['id'] ?>]"
                value="<?= $stockActual ?>">
     </td>
 </tr>
@@ -246,25 +249,25 @@ while ($p = $productos->fetch_assoc()):
             </div>
         </div>
 
-    <?php endwhile; ?>
+<?php endwhile; ?>
 
     </div>
 
- <a href="/inventariokikes/controllers/inventario/exportar_stock_actual.csv.php"
-   class="btn btn-success btn-exportar shadow">
-    📤 Exportar inventario
-</a>
-
+    <a href="/inventariokikes/controllers/inventario/exportar_stock_actual.csv.php"
+       class="btn btn-success btn-exportar shadow">
+        📤 Exportar inventario
+    </a>
 
 </div>
+
 <button class="btn btn-secondary position-fixed bottom-0 start-0 m-3 shadow"
         onclick="history.back()">
-  ⬅ Regresar
+    ⬅ Regresar
 </button>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.querySelectorAll('.form-inventario').forEach(form => {
 
@@ -284,7 +287,6 @@ document.querySelectorAll('.form-inventario').forEach(form => {
             });
 
             const data = await res.json();
-
             if (!data.ok) throw new Error(data.msg);
 
             Swal.fire({

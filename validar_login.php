@@ -9,18 +9,23 @@ if ($usuario === '' || $password === '') {
     die("<script>alert('Complete todos los campos');window.location='index.php'</script>");
 }
 
-$sql = "SELECT u.id, u.nombre, u.email, u.password, u.rol_id, r.nombre AS rol
-        FROM usuarios u
-        INNER JOIN roles r ON u.rol_id = r.id
-        WHERE u.email = ?
-          AND u.activo = 1
-        LIMIT 1";
+$sql = "
+SELECT 
+    u.id,
+    u.nombre,
+    u.email,
+    u.password,
+    u.rol_id,
+    u.ubicacion_id,
+    r.nombre AS rol
+FROM usuarios u
+INNER JOIN roles r ON u.rol_id = r.id
+WHERE u.email = ?
+  AND u.activo = 1
+LIMIT 1
+";
 
 $stmt = $conexion->prepare($sql);
-if (!$stmt) {
-    die("Error al preparar la consulta");
-}
-
 $stmt->bind_param("s", $usuario);
 $stmt->execute();
 $resultado = $stmt->get_result();
@@ -31,21 +36,18 @@ if ($resultado->num_rows === 0) {
 
 $row = $resultado->fetch_assoc();
 
-$hashLimpio = trim($row['password']);
-
-if (!password_verify($password, trim($row['password']))) {
-    die("PASSWORD NO COINCIDE");
+if (!password_verify($password, $row['password'])) {
+    die("<script>alert('Contraseña incorrecta');window.location='index.php'</script>");
 }
 
-
-
 /* 🔐 SESIÓN */
-$_SESSION['user_id'] = $row['id'];
-$_SESSION['nombre']  = $row['nombre'];
-$_SESSION['email']   = $row['email'];
-$_SESSION['rol_id']  = $row['rol_id'];
-$_SESSION['rol']     = $row['rol'];
-$_SESSION['login']   = true;
+$_SESSION['user_id']       = $row['id'];
+$_SESSION['nombre']        = $row['nombre'];
+$_SESSION['email']         = $row['email'];
+$_SESSION['rol_id']        = $row['rol_id'];
+$_SESSION['rol']           = strtoupper($row['rol']);
+$_SESSION['ubicacion_id']  = $row['ubicacion_id']; // ✅ CLAVE
+$_SESSION['login']         = true;
 
 header("Location: pages/inicio.php");
 exit;
